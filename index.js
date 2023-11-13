@@ -25,7 +25,7 @@ const cookie = require("cookie");
 const axios = require('axios')
 const FormData = require("form-data");
 const isImageURL = require('image-url-validator').default
-global.openai = "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";
+global.openai = "your apikey openai";
 global.apikey = ['namalu2', 'namalu'];
 global.hugging = "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";
 app.use(express.json());
