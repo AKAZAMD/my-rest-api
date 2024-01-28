@@ -1,1 +1,2 @@
-sh up.sh
+
+npm start

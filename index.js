@@ -24,12 +24,81 @@ const cheerio = require("cheerio");
 const cookie = require("cookie");
 const axios = require('axios')
 const FormData = require("form-data");
+const path = require('path');
+const favicon = require('serve-favicon');
+const { youtubedl } = require('scraper');
+const yts = require("yt-search");
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const isImageURL = require('image-url-validator').default
-global.openai = "your apikey openai";
-global.apikey = ['namalu2', 'namalu'];
+global.openai = "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";
+global.apikey = ['namalu22', 'Rest-Api-Premium1'];
 global.hugging = "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";
 app.use(express.json());
 
+app.use(express.static(publicDirectoryPath));
+
+async function faviconi() {
+  const iconBuffer = await (await fetch("https://raw.githubusercontent.com/AKAZAMD/style-rest-api/main/icon.ico")).buffer();
+  app.use(favicon(Buffer.from(iconBuffer)));
+}
+
+
+faviconi();
+
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+const igdl = async (urlku) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const response = await axios.post(
+        "https://snapinsta.tv/core/ajax.php",
+        new URLSearchParams({
+          url: urlku,
+          host: "instagram",
+        }),
+        {
+          headers: {
+            accept: "*/*",
+            cookie:
+              "PHPSESSID=a457b241510ae4498043da9e765de30c; _gid=GA1.2.1007159517.1698108684; _gat_gtag_UA_209171683_55=1; _no_tracky_101422226=1; _ga_N43B1RQRDX=GS1.1.1698108684.1.1.1698108695.0.0.0; _ga=GA1.1.1466088105.1698108684",
+            "user-agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+          },
+        }
+      );
+
+      const $ = cheerio.load(response.data);
+      const mediaURL = $(
+        "div.row > div.col-md-12 > div.row.story-container.mt-4.pb-4.border-bottom"
+      )
+        .map((_, el) => {
+          return (
+            "https://snapinsta.tv/" +
+            $(el).find("div.col-md-8.mx-auto > a").attr("href")
+          );
+        })
+        .get();
+
+      const res = {
+        status: 200,
+        media: mediaURL,
+      };
+
+      console.log(res);
+      resolve(res);
+    } catch (e) {
+      console.log(e);
+      reject({
+        status: 400,
+        message: "error",
+      });
+    }
+  });
+};
 async function getBuffer(url, options){
 	try {
 		options ? options : {}
@@ -81,6 +150,7 @@ async function textpro2(url, text1, text2) {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
     },
   });
+  
   const caritoken = await geturl.text();
   const $ = cheerio.load(caritoken);
   const token = $('input[name="token"]').attr("value");
@@ -116,6 +186,37 @@ async function textpro2(url, text1, text2) {
   const result = await getBuffer(hasilImage);
   return result;
 }
+async function ssweb (url, device = 'desktop')  {
+		return new Promise((resolve, reject) => {
+			 const base = 'https://www.screenshotmachine.com'
+			 const param = {
+			   url: url,
+			   device: device,
+			   cacheLimit: 0
+			 }
+			 axios({url: base + '/capture.php',
+				  method: 'POST',
+				  data: new URLSearchParams(Object.entries(param)),
+				  headers: {
+					   'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				  }
+			 }).then((data) => {
+				  const cookies = data.headers['set-cookie']
+				  if (data.data.status == 'success') {
+					   axios.get(base + '/' + data.data.link, {
+							headers: {
+								 'cookie': cookies.join('')
+							},
+							responseType: 'arraybuffer'
+					   }).then(({ data }) => {
+							resolve(data)
+					   })
+				  } else {
+					   reject()
+				  }
+			 }).catch(reject)
+		})
+   }
 async function textpro(url, text) {
   if (!/^https:\/\/textpro\.me\/.+\.html$/.test(url))
     throw new Error("Url Salah!!");
@@ -230,939 +331,786 @@ async function photooxy(url, text) {
   return result
 }
 app.get('/404', (req, res) => {
-    res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Halaman Tidak Ditemukan</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        #particles-js {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            color: black;
-            pointer-events: none;
-        }
-
-        .heading {
-            text-align: center;
-            color: blue;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .title {
-            font-size: 5rem;
-            margin-bottom: 40px;
-        }
-
-        .button-container {
-            text-align: center;
-            animation: slideIn 2s linear;
-        }
-
-        .back-button {
-            display: inline-block;
-            padding: 15px 30px;
-            font-size: 24px;
-            background-color: #00ff00;
-            color: #000;
-            border-radius: 50px;
-            cursor: pointer;
-            opacity: 1;
-            animation: fadeOut 2s linear infinite alternate; /* Mengatur animasi menghilang dan muncul */
-        }
-
-        @keyframes slideIn {
-            0% {
-                transform: translateX(-100%);
-                opacity: 0;
-            }
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div id="particles-js"></div>
-    <div class="heading">
-        <h1 class="title">Halaman Tidak Ditemukan</h1>
-        <div class="button-container">
-            <a class="back-button" href="/docs">Kembali ke Docs</a>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script>
-        window.addEventListener('load', function () {
-            particlesJS("particles-js", {
-                "particles": {
-                    "number": {
-                        "value": 100,
-                        "density": {
-                            "enable": true,
-                            "value_area": 600
-                        }
-                    },
-                    "color": {
-                        "value": "#00ff00"
-                    },
-                    "shape": {
-                        "type": "circle"
-                    },
-                    "opacity": {
-                        "value": 0.5,
-                        "random": true
-                    },
-                    "size": {
-                        "value": 3,
-                        "random": true
-                    },
-                    "move": {
-                        "enable": true,
-                        "speed": 20
-                    }
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+    res.send(`<p> NOT FOUND<p>
+    <a href="/">BACK HOME<a>
 `
 );
 });
+
 app.get('/', (req, res) => {
-		res.send(`<!DOCTYPE html>
+		res.send(`
 <html lang="en">
 <head>
-<meta name="google-site-verification" content="oIx98k_QqyFoTp4rm_SopYhsPI_cungtn3fA5NFV5KM" />
     <meta charset="UTF-8">
-    <title>Akazamd</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        #particles-js {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            color: black;
-            pointer-events: none; 
-        }
-
-        .heading {
-            text-align: left;
-            color: blue;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .title {
-            font-size: 7rem; 
-            margin-bottom: 40px;
-        }
-        .links {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            max-width: 120px;
-            margin: 0 auto;
-            font-size: 4rem;
-            padding: 0 20px;
-        }
-
-        .animated-link {
-            text-decoration: none;
-            padding: 15px 30px;
-            font-size: 24px;
-            background-color: #00ff00;
-            color: #000;
-            border-radius: 50px;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .animated-link:hover {
-            transform: scale(1.1);
-        }
-
-        .animated-link.left-to-right {
-            animation: leftToRight 2s ease-in-out 1;
-        }
-
-        .animated-link.right-to-left {
-            animation: rightToLeft 2s ease-in-out 1;
-        }
-
-        @keyframes leftToRight {
-            0% {
-                transform: translateX(-100%);
-                opacity: 0;
-            }
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes rightToLeft {
-            0% {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @media screen and (max-width: 768px) {
-            .links {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akazamd - APIs</title>
+<meta name="google-site-verification" content="oIx98k_QqyFoTp4rm_SopYhsPI_cungtn3fA5NFV5KM" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.11/typed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css"/>
+    <meta name="description" content="Akaza-RestApi Adalah Rest api gratis untuk semua orang dengan fitur melimpah tanpa login">
+<link rel="shortcut icon" type="image/x-icon" href="https://i.ibb.co/Rz3Bjpg/whats-ur-opinion-about-akaza-v0-ecynlgmlf5jb1.jpg" />
+  <link rel="icon" sizes="192x192" href="https://i.ibb.co/Rz3Bjpg/whats-ur-opinion-about-akaza-v0-ecynlgmlf5jb1.jpg" />
 </head>
 <body>
-    <div id="particles-js"></div>
-    <div class="heading">
-        <h1 class="title">AKAZAMD</h1>
-        <div class="links">
-            <a class="animated-link right-to-left" href="docs">Documentasi</a>
-        </div>
+    <div class="scroll-up-btn">
+        <i class="fas fa-angle-up"></i>
     </div>
+    <nav class="navbar">
+        <div class="max-width">
+            <div class="logo"><a href="#">Akaza <span>MD</span></a></div>
+            <ul class="menu">
+                <li><a href="/" class="menu-btn">Home</a></li>
+                <li><a href="/docs" class="menu-btn">Documentation</a></li>
+                <li><a href="/404" class="menu-btn">Portofolio</a></li>
+            </ul>
+            <div class="menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- home section start -->
+    <section class="home" id="home">
+        <div class="max-width">
+            <div class="home-content">
+                <div class="text-1">Hello, My Name Is</div>
+                <div class="text-2">Akazamd</div>
+                <div class="text-3">hobi ku adalah<span class="typing"></span></div>
+                <a href="/docs">Documentation</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- footer section start -->
+    <footer>
+        <span>Copyright <span class="far fa-copyright"></span> 2023 <a href="/about">akazamd</a>. All rights reserved.</span>
+    </footer>
+
     <script>
-        window.addEventListener('load', function () {
-            particlesJS("particles-js", {
-                "particles": {
-                    "number": {
-                        "value": 100,
-                        "density": {
-                            "enable": true,
-                            "value_area": 600
-                        }
-                    },
-                    "color": {
-                        "value": "#00ff00"
-                    },
-                    "shape": {
-                        "type": "circle"
-                    },
-                    "opacity": {
-                        "value": 0.5,
-                        "random": true
-                    },
-                    "size": {
-                        "value": 3,
-                        "random": true
-                    },
-                    "move": {
-                        "enable": true,
-                        "speed": 20
-                    }
-                }
-            });
-        });
-    </script>
-</body>
-</html>
-
-`);
-});
-
-
-app.get('/docs', (req, res) => {
-		res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-<meta name="google-site-verification" content="oIx98k_QqyFoTp4rm_SopYhsPI_cungtn3fA5NFV5KM" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AKAZA_MD</title>
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-
-        
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap" rel="stylesheet">
-        <style>
-html {
-            margin: 0;
-            padding: 0;
-background: rgb(1, 8, 9); 
-
-         background-repeat: round;
-            width: 100%;
-            height: 100%;
+    $(document).ready(function(){
+    $(window).scroll(function(){
+        if(this.scrollY > 20){
+            $('.navbar').addClass("sticky");
+        }else{
+            $('.navbar').removeClass("sticky");
         }
+        if(this.scrollY > 500){
+            $('.scroll-up-btn').addClass("show");
+        }else{
+            $('.scroll-up-btn').removeClass("show");
+        }
+    });
+    $('.scroll-up-btn').click(function(){
+        $('html').animate({scrollTop: 0});
+        $('html').css("scrollBehavior", "auto");
+    });
+    $('.navbar .menu li a').click(function(){
+        $('html').css("scrollBehavior", "smooth");
+    });
+    $('.menu-btn').click(function(){
+        $('.navbar .menu').toggleClass("active");
+        $('.menu-btn i').toggleClass("active");
+    });
+    var typed = new Typed(".typing", {
+        strings: ["main Game", "Nonton Youtube"],
+        typeSpeed: 100,
+        backSpeed: 60,
+        loop: true
+    });
+    var typed = new Typed(".typing-2", {
+        strings: ["main Game", "Nonton Youtube"],
+        typeSpeed: 100,
+        backSpeed: 60,
+        loop: true
+    });
+    $('.carousel').owlCarousel({
+        margin: 20,
+        loop: true,
+        autoplay: true,
+        autoplayTimeOut: 2000,
+        autoplayHoverPause: true,
+        responsive: {
+            0:{
+                items: 1,
+                nav: false
+            },
+            600:{
+                items: 2,
+                nav: false
+            },
+            1000:{
+                items: 3,
+                nav: false
+            }
+        }
+    });
+});
+	</script>
+</body>
+<style>
+	/*  import google fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@400;500;700&display=swap');
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Comic Neue', cursive;
-  background: rgb(1, 8, 9); 
-}
-
-.wrapper {
-  width: 1100px;
-  margin: auto;
-  position: relative;
-}
-
-.besar {
-    font-size: 2rem;
-}
-.logo a {
-    display: block;
-    width: 100px; /* Sesuaikan ukuran yang Anda inginkan */
-    height: 100px; /* Sesuaikan ukuran yang Anda inginkan */
-    line-height: 100px; /* Sesuaikan ukuran yang Anda inginkan */
-    text-align: center;
-    text-decoration: none;
-    border: 2px solid white; /* Tambahkan garis putih sebagai border */
-    color: white; /* Warna teks putih */
-    font-family: 'Rubik Mono One', sans-serif; /* Sesuaikan font yang Anda inginkan */
-    margin-top: 10px; /* Tambahkan margin-top sesuai kebutuhan Anda */
-}
-
-.menu {
-  float: right;
-}
-
-nav {
-  width: 100%;
-  margin: 0px;
-  display: center;
-  line-height: 80px;
-  position: sticky;
-  position: -webkit-sticky;
-  top: 0;
-  z-index: -1000;
-  border-bottom: 1px solid #364f6b;
-}
-
-nav ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-nav ul li {
-  float: left;
-}
-
-nav ul li a {
-  color: black;
-  font-weight: bold;
-  text-align: center;
-  padding: 0px 16px 0px 16px;
-  text-decoration: none;
-}
-
-nav ul li a:hover {
-  text-decoration: underline;
-}
-
-section {
-  margin: auto;
-  display: flex;
-  margin-bottom: 50px;
-}
-
-.kolom {
-  margin-top: 50px;
-  margin-bottom: 50px;
-}
-
-.kolom .deskripsi {
-  font-size: 20px;
-  font-weight: bold;
-  color: #ffffff;
-font-family: 'Montserrat', sans-serif;
-}
-
-h2 {
-  font-weight: 600;
-  font-size: 20px;
-  margin-bottom: 20px;
-  width: 100%;
-  line-height: 50px;
-  color: white;
-}
-
-a.tbl-biru {
-  background: #3f72af;
-  border-radius: 20px;
-  margin-top: 20px;
-  padding: 15px 20px 15px 20px;
-  color: #FFFFFF;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-a.tbl-biru:hover {
-  background: #fc5185;
-  text-decoration: none;
-}
-
-a.tbl-pink {
-  background: #fc5185;
-  border-radius: 20px;
-  margin-top: 20px;
-  padding: 15px 20px 15px 20px;
-  color: #FFFFFF;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-a.tbl-pink:hover {
-  background: #3f72af;
-  text-decoration: none;
-}
-
-p {
-  margin: 5px 0px 4px 0px;
-  padding: 5px 0px 4px 0px;
-}
-
-.tengah {
-  text-align: center;
-  width: 100%;
-}
-
-#contact {
-  padding: 50px 0px 50px 0px;
-}
-
-.footer {
-  width: 100%;
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  margin: auto;
-}
-
-.footer-section {
-  width: 20%;
-  margin: 0 auto;
-}
-
-h3 {
-  font-weight: 800;
-  font-size: 30px;
-  margin-bottom: 20px;
-  color: black;
-  width: 100%;
-  line-height: 50px;
-}
-
-/* ----------------- */
-
-#copyright {
-  text-align: center;
-  width: 100%;
-  padding: 50px 0px 50px 0px;
-  margin-top: 50px;
-}
-
-@media screen and (max-width: 640px) {
-  .footer {
-    display: inline-block
-  }
-}
-
-@media screen and (max-width: 991.98px) {
-  .wrapper {
-    width: 90%;
-  }
-
-  .logo a {
-    display: block;
-    width: 100%;
-    text-align: center;
-  }
-
-  nav .menu {
-    width: 100%;
+*{
     margin: 0;
-  }
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+html{
+    scroll-behavior: smooth;
+}
 
-  nav .menu ul {
-    text-align: center;
+/* custom scroll bar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* all similar content styling codes */
+section{
+    padding: 100px 0;
+}
+.max-width{
+    max-width: 1300px;
+    padding: 0 80px;
     margin: auto;
-    line-height: 60px;
-  }
-
-  nav .menu ul li {
-    display: inline-block;
-    float: none;
-  }
-
-  section {
-    display: block;
-  }
-
-  section img {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
 }
-
-
-
-
-
-
-
-
-/* nav */
-
-.nz {
-  position: fixed;
-  top: 0;
-  /*left: -100%;*/
-  right: -100%;
-  height: 100%;
-  width: 100%;
-  background: #000;
-  background: linear-gradient(90deg, #f92c78, #4114a1);
-  /* background: linear-gradient(375deg, #1cc7d0, #2ede98); */
-  /* background: linear-gradient(-45deg, #e3eefe 0%, #efddfb 100%);*/
-  transition: all 0.6s ease-in-out;
-  z-index: 20;
+.about, .services, .skills, .teams, .contact, footer{
+    font-family: 'Poppins', sans-serif;
 }
-
-#active:checked~.nz {
-  /*left: 0;*/
-  right: 0;
+.about .about-content,
+.services .serv-content,
+.skills .skills-content,
+.contact .contact-content{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
 }
-
-.menu-btn {
-  position: absolute;
-  z-index: 21;
-  right: 10px;
-  /*left: 20px; */
-  top: 20px;
-  height: 50px;
-  width: 50px;
-  text-align: center;
-  line-height: 60px;
-  border-radius: 50%;
-  font-size: 20px;
-  cursor: pointer;
-  /*color: #fff;*/
-  background: linear-gradient(90deg, #f92c78, #4114a1);*/
-  background: linear-gradient(375deg, rgba(28,199,208,0.4), rgba(12,55,200,0.2)); 
-  /* background: linear-gradient(-45deg, #e3eefe 0%, #efddfb 100%);*/
-  transition: all 0.5s ease-in-out;
-}
-
-.menu-btn span,
-.menu-btn:before,
-.menu-btn:after {
-  content: "";
-  position: absolute;
-  top: calc(50% - 1px);
-  left: 30%;
-  width: 40%;
-  border-bottom: 2px solid #000;
-  transition: transform .6s cubic-bezier(0.215, 0.61, 0.355, 1);
-  z-index: 21;
-}
-
-.menu-btn:before {
-  transform: translateY(-8px);
-}
-
-.menu-btn:after {
-  transform: translateY(8px);
-}
-
-
-.close {
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  transition: background .6s;
-}
-
-/* closing animation */
-#active:checked+.menu-btn span {
-  transform: scaleX(0);
-}
-
-#active:checked+.menu-btn:before {
-  transform: rotate(45deg);
-  border-color: #fff;
-}
-
-#active:checked+.menu-btn:after {
-  transform: rotate(-45deg);
-  border-color: #fff;
-}
-
-.nz ul {
-  position: absolute;
-  top: 60%;
-  left: 50%;
-  height: 90%;
-  transform: translate(-50%, -50%);
-  list-style: none;
-  text-align: center;
-}
-
-.nz ul li {
-  height: 10%;
-  margin: 15px 0;
-}
-
-.nz ul li a {
-  text-decoration: none;
-  font-size: 30px;
-  font-weight: 500;
-  padding: 5px 30px;
-  color: #fff;
-  border-radius: 50px;
-  position: absolute;
-  line-height: 50px;
-  margin: 5px 30px;
-  opacity: 0;
-  transition: all 0.3s ease;
-  transition: transform .6s cubic-bezier(0.215, 0.61, 0.355, 1);
-}
-
-.nz ul li a:after {
-  position: absolute;
-  content: "";
-  background: #fff;
-  /*background: linear-gradient(#14ffe9, #ffeb3b, #ff00e0);*/
-  /*background: linear-gradient(375deg, #1cc7d0, #2ede98);*/
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  border-radius: 50px;
-  transform: scaleY(0);
-  z-index: -1;
-  transition: transform 0.3s ease;
-}
-
-.nz ul li a:hover:after {
-  transform: scaleY(1);
-}
-
-.nz ul li a:hover {
-  color: #1a73e8;
-}
-
-input[type="checkbox"] {
-  display: none;
-}
-
-.content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: -1;
-  text-align: center;
-  width: 100%;
-  color: #202020;
-}
-
-.content .title {
-  font-size: 40px;
-  font-weight: 700;
-}
-
-.content p {
-  font-size: 35px;
-  font-weight: 600;
-}
-
-#active:checked~.nz ul li a {
-  opacity: 1;
-}
-
-.nz ul li a {
-  transition: opacity 1.2s, transform 1.2s cubic-bezier(0.215, 0.61, 0.355, 1);
-  transform: translateX(100px);
-}
-
-#active:checked~.nz ul li a {
-  transform: none;
-  transition-timing-function: ease, cubic-bezier(.1, 1.3, .3, 1);
-  /* easeOutBackを緩めた感じ */
-  transition-delay: .6s;
-  transform: translateX(-100px);
-}
-
-}
-.full-wrapper {
-  z-index: 999;
-}
-
-
-
-/*scrolll*/
-
-
-
- 
-    html
-    {
-        scroll-behavior: smooth;
-    }
- 
-    body
-    {
-        font-family: Arial, Helvetica, sans-serif;
-    }
- 
-    section
-    {
-        border-radius: 100%;
-        padding: 25px;
-        
-    }
- 
- 
-    #halaman2
-    {
-        background-color: whitesmoke;
-        width: 100px;
-        height: 100px;
-        text-align: center;
-        text-rendering: auto;
-        text-decoration: none;
-        color: rgba(27, 175, 27, 0.315);
-    }
-    #keatas
-    {
-text-align: center;
-text-decoration: none;
-
-    }
-    /*video*/
-.fullscreen-bg {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    overflow: hidden;
-    z-index: 102039388;
-}
- 
-.bg-video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
- 
-@media (min-aspect-ratio: 16/9) {
-    .bg-video {
-        height: 300%;
-        top: -100%;
-    }
-}
- 
-@media (max-aspect-ratio: 16/9) {
-    .bg-video {
-        width: 300%;
-        left: -100%;
-    }
-}
- 
-@media (max-width: 767px) {
-    .fullscreen-bg {
-        background: url('poster.jpg') center center / cover no-repeat;
-    }
- 
-    .bg-video {
-        display: none;
-    }
-}
-.row{
-  display:flex;
-  justify-content:center;
-  margin-top:1rem;
-}
-.mr-2{
-  margin-right: 0.5rem;
-}
-.akaza1{
-    font-family: Comic Sans MS;  
-    font-size: 1rem;   
-    background: rgb(99, 75, 75);  
-    color: white;  
-    border: brown 0.2rem solid; 
-    border-radius: 0.5rem; 
-    padding: 0.8rem 1.8rem; 
-    margin-top: 1rem; 
-    text-decoration: none; 
+section .title{
+    position: relative;
     text-align: center;
+    font-size: 40px;
+    font-weight: 500;
+    margin-bottom: 60px;
+    padding-bottom: 20px;
+    font-family: 'Ubuntu', sans-serif;
+}
+section .title::before{
+    content: "";
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    width: 180px;
+    height: 3px;
+    background: #111;
+    transform: translateX(-50%);
+}
+section .title::after{
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    font-size: 20px;
+    color: crimson;
+    padding: 0 5px;
+    background: #fff;
+    transform: translateX(-50%);
+}
+
+/* navbar styling */
+.navbar{
+    position: fixed;
+    width: 100%;
+    z-index: 999;
+    padding: 30px 0;
+    font-family: 'Ubuntu', sans-serif;
+    transition: all 0.3s ease;
+}
+.navbar.sticky{
+    padding: 15px 0;
+    background: crimson;
+}
+.navbar .max-width{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.navbar .logo a{
+    color: #fff;
+    font-size: 35px;
+    font-weight: 600;
+}
+.navbar .logo a span{
+    color: crimson;
+    transition: all 0.3s ease;
+}
+.navbar.sticky .logo a span{
+    color: #fff;
+}
+.navbar .menu li{
+    list-style: none;
+    display: inline-block;
+}
+.navbar .menu li a{
+    display: block;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+    margin-left: 25px;
+    transition: color 0.3s ease;
+}
+.navbar .menu li a:hover{
+    color: crimson;
+}
+.navbar.sticky .menu li a:hover{
+    color: #fff;
+}
+
+/* menu btn styling */
+.menu-btn{
+    color: #fff;
+    font-size: 23px;
+    cursor: pointer;
+    display: none;
+}
+.scroll-up-btn{
+    position: fixed;
+    height: 45px;
+    width: 42px;
+    background: crimson;
+    right: 30px;
+    bottom: 10px;
+    text-align: center;
+    line-height: 45px;
+    color: #fff;
+    z-index: 9999;
+    font-size: 30px;
+    border-radius: 6px;
+    border-bottom-width: 2px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+.scroll-up-btn.show{
+    bottom: 30px;
+    opacity: 1;
+    pointer-events: auto;
+}
+.scroll-up-btn:hover{
+    filter: brightness(90%);
+}
+
+
+/* home section styling */
+.home{
+    display: flex;
+    background: url("https://media.tenor.com/-9rym9F112EAAAAd/ocean.gif") no-repeat center;
+    height: 100vh;
+    color: #fff;
+    min-height: 500px;
+    background-size: cover;
+    background-attachment: fixed;
+    font-family: 'Ubuntu', sans-serif;
+}
+.home .max-width{
+  width: 100%;
+  display: flex;
+}
+.home .max-width .row{
+  margin-right: 0;
+}
+.home .home-content .text-1{
+    font-size: 27px;
+}
+.home .home-content .text-2{
+    font-size: 75px;
+    font-weight: 600;
+    margin-left: -3px;
+}
+.home .home-content .text-3{
+    font-size: 40px;
+    margin: 5px 0;
+}
+.home .home-content .text-3 span{
+    color: crimson;
+    font-weight: 500;
+}
+.home .home-content a{
+    display: inline-block;
+    background: crimson;
+    color: #fff;
+    font-size: 25px;
+    padding: 12px 36px;
+    margin-top: 20px;
+    font-weight: 400;
+    border-radius: 6px;
+    border: 2px solid crimson;
+    transition: all 0.3s ease;
+}
+.home .home-content a:hover{
+    color: crimson;
+    background: none;
+}
+
+/* about section styling */
+.about .title::after{
+    content: "who i am";
+}
+.about .about-content .left{
+    width: 45%;
+}
+.about .about-content .left img{
+    height: 400px;
+    width: 400px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+.about .about-content .right{
+    width: 55%;
+}
+.about .about-content .right .text{
+    font-size: 25px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.about .about-content .right .text span{
+    color: crimson;
+}
+.about .about-content .right p{
+    text-align: justify;
+}
+.about .about-content .right a{
+    display: inline-block;
+    background: crimson;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 500;
+    padding: 10px 30px;
+    margin-top: 20px;
+    border-radius: 6px;
+    border: 2px solid crimson;
+    transition: all 0.3s ease;
+}
+.about .about-content .right a:hover{
+    color: crimson;
+    background: none;
+}
+
+/* services section styling */
+.services, .teams{
+    color:#fff;
+    background: #111;
+}
+.services .title::before,
+.teams .title::before{
+    background: #fff;
+}
+.services .title::after,
+.teams .title::after{
+    background: #111;
+    content: "what i provide";
+}
+.services .serv-content .card{
+    width: calc(33% - 20px);
+    background: #222;
+    text-align: center;
+    border-radius: 6px;
+    padding: 50px 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.services .serv-content .card:hover{
+    background: crimson;
+}
+.services .serv-content .card .box{
+    transition: all 0.3s ease;
+}
+.services .serv-content .card:hover .box{
+    transform: scale(1.05);
+}
+.services .serv-content .card i{
+    font-size: 50px;
+    color: crimson;
+    transition: color 0.3s ease;
+}
+.services .serv-content .card:hover i{
+    color: #fff;
+}
+.services .serv-content .card .text{
+    font-size: 25px;
+    font-weight: 500;
+    margin: 10px 0 7px 0;
+}
+
+/* skills section styling */
+
+.skills .title::after{
+    content: "what i know";
+}
+.skills .skills-content .column{
+    width: calc(50% - 30px);
+}
+.skills .skills-content .left .text{
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.skills .skills-content .left p{
+    text-align: justify;
+}
+.skills .skills-content .left a{
+    display: inline-block;
+    background: crimson;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 8px 16px;
+    margin-top: 20px;
+    border-radius: 6px;
+    border: 2px solid crimson;
+    transition: all 0.3s ease;
+}
+.skills .skills-content .left a:hover{
+    color: crimson;
+    background: none;
+}
+.skills .skills-content .right .bars{
+    margin-bottom: 15px;
+}
+.skills .skills-content .right .info{
+    display: flex;
+    margin-bottom: 5px;
+    align-items: center;
+    justify-content: space-between;
+}
+.skills .skills-content .right span{
+    font-weight: 500;
+    font-size: 18px;
+}
+.skills .skills-content .right .line{
+    height: 5px;
+    width: 100%;
+    background: lightgrey;
+    position: relative;
+}
+.skills .skills-content .right .line::before{
+    content: "";
+    position: absolute;
+    height: 100%;
+    left: 0;
+    top: 0;
+    background: crimson;
+}
+.skills-content .right .html::before{
+    width: 90%;
+}
+.skills-content .right .css::before{
+    width: 60%;
+}
+.skills-content .right .js::before{
+    width: 80%;
+}
+.skills-content .right .php::before{
+    width: 50%;
+}
+.skills-content .right .mysql::before{
+    width: 70%;
+}
+
+/* teams section styling */
+.teams .title::after{
+    content: "who with me";
+}
+.teams .carousel .card{
+    background: #222;
+    border-radius: 6px;
+    padding: 25px 35px;
+    text-align: center;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.teams .carousel .card:hover{
+    background: crimson;
+}
+.teams .carousel .card .box{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.teams .carousel .card:hover .box{
+    transform: scale(1.05);
+}
+.teams .carousel .card .text{
+    font-size: 25px;
+    font-weight: 500;
+    margin: 10px 0 7px 0;
+}
+.teams .carousel .card img{
+    height: 150px;
+    width: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid crimson;
+    transition: all 0.3s ease;
+}
+.teams .carousel .card:hover img{
+    border-color: #fff;
+}
+.owl-dots{
+    text-align: center;
+    margin-top: 20px;
+}
+.owl-dot{
+    height: 13px;
+    width: 13px;
+    margin: 0 5px;
+    outline: none!important;
+    border-radius: 50%;
+    border: 2px solid crimson!important;
+    transition: all 0.3s ease;
+}
+.owl-dot.active{
+    width: 35px;
+    border-radius: 14px;
+}
+.owl-dot.active,
+.owl-dot:hover{
+    background: crimson!important;
+}
+
+/* contact section styling */
+.contact .title::after{
+    content: "get in touch";
+}
+.contact .contact-content .column{
+    width: calc(50% - 30px);
+}
+.contact .contact-content .text{
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.contact .contact-content .left p{
+    text-align: justify;
+}
+.contact .contact-content .left .icons{
+    margin: 10px 0;
+}
+.contact .contact-content .row{
+    display: flex;
+    height: 65px;
+    align-items: center;
+}
+.contact .contact-content .row .info{
+    margin-left: 30px;
+}
+.contact .contact-content .row i{
+    font-size: 25px;
+    color: crimson;
+}
+.contact .contact-content .info .head{
+    font-weight: 500;
+}
+.contact .contact-content .info .sub-title{
+    color: #333;
+}
+.contact .right form .fields{
     display: flex;
 }
+.contact .right form .field,
+.contact .right form .fields .field{
+    height: 45px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+.contact .right form .textarea{
+    height: 80px;
+    width: 100%;
+}
+.contact .right form .name{
+    margin-right: 10px;
+}
+.contact .right form .field input,
+.contact .right form .textarea textarea{
+    height: 100%;
+    width: 100%;
+    border: 1px solid lightgrey;
+    border-radius: 6px;
+    outline: none;
+    padding: 0 15px;
+    font-size: 17px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+}
+.contact .right form .field input:focus,
+.contact .right form .textarea textarea:focus{
+    border-color: #b3b3b3;
+}
+.contact .right form .textarea textarea{
+  padding-top: 10px;
+  resize: none;
+}
+.contact .right form .button-area{
+  display: flex;
+  align-items: center;
+}
+.right form .button-area button{
+  color: #fff;
+  display: block;
+  width: 160px!important;
+  height: 45px;
+  outline: none;
+  font-size: 18px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-wrap: nowrap;
+  background: crimson;
+  border: 2px solid crimson;
+  transition: all 0.3s ease;
+}
+.right form .button-area button:hover{
+  color: crimson;
+  background: none;
+}
+/* footer section styling */
+footer{
+    background: #111;
+    padding: 15px 23px;
+    color: #fff;
+    text-align: center;
+}
+footer span a{
+    color: crimson;
+    text-decoration: none;
+}
+footer span a:hover{
+    text-decoration: underline;
+}
 
-.akaza1:hover{
-   opacity:0.9;
+
+/* responsive media query start */
+@media (max-width: 1104px) {
+    .about .about-content .left img{
+        height: 350px;
+        width: 350px;
+    }
 }
-.ini_text {
-color: white;
-    text-decoration:none; 
-font-family: Comic Sans MS; 
+
+@media (max-width: 991px) {
+    .max-width{
+        padding: 0 50px;
+    }
 }
+@media (max-width: 947px){
+    .menu-btn{
+        display: block;
+        z-index: 999;
+    }
+    .menu-btn i.active:before{
+        content: "\f00d";
+    }
+    .navbar .menu{
+        position: fixed;
+        height: 100vh;
+        width: 100%;
+        left: -100%;
+        top: 0;
+        background: #111;
+        text-align: center;
+        padding-top: 80px;
+        transition: all 0.3s ease;
+    }
+    .navbar .menu.active{
+        left: 0;
+    }
+    .navbar .menu li{
+        display: block;
+    }
+    .navbar .menu li a{
+        display: inline-block;
+        margin: 20px 0;
+        font-size: 25px;
+    }
+    .home .home-content .text-2{
+        font-size: 70px;
+    }
+    .home .home-content .text-3{
+        font-size: 35px;
+    }
+    .home .home-content a{
+
+    .services .serv-content .card{
+        width: 100%;
+    }
+}
+
+@media (max-width: 500px) {
+    .home .home-content .text-2{
+        font-size: 50px;
+    }
+    .home .home-content .text-3{
+        font-size: 27px;
+    }
+    .about .about-content .right .text,
+    .skills .skills-content .left .text{
+        font-size: 19px;
+    }
+    .contact .right form .fields{
+        flex-direction: column;
+    }
+    .contact .right form .name,
+    .contact .right form .email{
+        margin: 0;
+    }
+    .right form .error-box{
+       width: 150px;
+    }
+    .scroll-up-btn{
+        right: 15px;
+        bottom: 15px;
+        height: 38px;
+        width: 35px;
+        font-size: 23px;
+        line-height: 38px;
+    }
+}
+
 </style>
-</head>
-<body>
- 
-    <section id="halaman1">
-<div class="full-wrapper">
-    <input type="checkbox" id="active">
-    <label for="active" class="menu-btn"><span></span></label>
-    <label for="active" class="close"></label>
-    <div class="nz">
-      <ul>
-<li><a href="./index.html">Home</a></li>
-<li><a href="./artikel/loading2.html">articel</a></li>
-<li><a href="#">Gallery</a></li>
-<li><a href="https://wa.me/6283843362676">Feedback</a></li>
-</ul>
-</div>
-      <h1>
-            <div class="logo besar"><a href='#'>AKAZA_MD</a>
-            </div>   
-            </h1>
-         
-  <div class="wrapper">  
-        <section id="home">
-            <div class="kolom">
-                <h2 class="deskripsi">WELCOME TO AKAZA MD </h2>
-            </div>
-        </section>
-<div class="ini_text">
-
-     <div data-aos="fade-right" data-aos-anchor-placement="top-center" data-aos-easing="ease-out" data-aos-duration="1000">Dapatkan Akses ke Rest-Api Ini Secara Gratis Tanpa ada Biaya Sama sekali.</div>
-</div>
-    <div data-aos="fade-right" data-aos-anchor-placement="top-center" data-aos-easing="ease-out" data-aos-duration="1000">Aku akan Selalu Mengupdate Web ini Secara Bertahap</div>
-<div class="ini_text">
-    <div data-aos="fade-right" data-aos-anchor-placement="top-center" data-aos-easing="ease-out" data-aos-duration="1000">Jika Kalian ingin mensupport project ini silahkan Donate saja.</div>
-
-    <div data-aos="fade-right" data-aos-anchor-placement="top-center" data-aos-easing="ease-out" data-aos-duration="1000">Link Donate (belum buat) </div>
-    </div>
-</div>
-      <h2><a href="https://www.youtube.com/@akazamd909" class="akaza1">YOUTUBE_OFFICIAL</a>
-                   <h2><a href="https://chat.whatsapp.com/F0xsURDzqHz4pUbmkCaVO2" class="akaza1">GROUP_OFFICIAL</a></h2>
-<div class="ini_text">
-             <div data-aos="fade-right" data-aos-anchor-placement="top-center" data-aos-easing="ease-out" data-aos-duration="1000">Peringatan Jika Ada Orang Yang mengaku sebagai pemilik Rest-Api ini Kecuali nomor owner di tombol di bawah maka itu bukan</div>
-</div>
-<section id="courses">
-
-            <div class="kolom">
-               <h2> <a href="https://wa.me/6283843362676"class="akaza1">OWNER</a></h2>
-                  <h2> <a href="/welcome?username=akaza&guildName=Almd&guildIcon=https://telegra.ph/file/c8307b624a194c2a056b8.jpg&memberCount=1000&avatar=https://telegra.ph/file/c8307b624a194c2a056b8.jpg&bg=https://telegra.ph/file/c8307b624a194c2a056b8.jpg"class="akaza1">Welcome-Maker</a></h2>
-                  <h2> <a href="/leave?username=akaza&guildName=Almd&guildIcon=https://telegra.ph/file/c8307b624a194c2a056b8.jpg&memberCount=1000&avatar=https://telegra.ph/file/c8307b624a194c2a056b8.jpg&bg=https://telegra.ph/file/c8307b624a194c2a056b8.jpg"class="akaza1">Leave-Maker</a></h2>
-                  <h2> <a href="/verif?username=akaza&guildName=Almd&guildIcon=https://telegra.ph/file/c8307b624a194c2a056b8.jpg&memberCount=1000&avatar=https://telegra.ph/file/c8307b624a194c2a056b8.jpg&bg=https://telegra.ph/file/c8307b624a194c2a056b8.jpg"class="akaza1">Verif-maker</a></h2>                  
-          <h2> <a href="/ytmp4?link=https://youtu.be/1FOKz0xpt8Y?si=LYMLYCToRuZAO9i8l"class=akaza1>Youtube-Download-mp4</text-to-images></a></h2>
-                           <h2> <a href="/scraper-textpro2?text=akaza&text2=hooh&link=https://textpro.me/create-logo-style-marvel-studios-ver-metal-972.html"class=akaza1>Scraper textpro 2</a></h2>
-                           <h2> <a href="/scraper-textpro?text=akaza&link=https://textpro.me/neon-light-text-effect-with-galaxy-style-981.html"class=akaza1>Scraper textpro 1</a></h2>
-   <h2> <a href="/ytmp3?link=https://youtu.be/1FOKz0xpt8Y?si=LYMLYCToRuZAO9i8l"class=akaza1>Youtube-Download-mp3</text-to-images></a></h2>
-                                <h2> <a href="/attp?text=akazamd"class=akaza1>attp</a></h2>
-<h2> <a href="/ttp?text=akazamd"class=akaza1>ttp</a></h2>
-<h2> <a href="/ai-midjourney?text=highly%20detailed,%20intricate,%204k,%208k,%20sharp%20focus,%20detailed%20hair,%20detailed&apikey=api%20lu"class=akaza1>ai-midjourney</a></h2>
-                              <h2> <a href="/welcome2?name=gimana&grub=nama_grup&member=10&pp=https://telegra.ph/file/c8307b624a194c2a056b8.jpg&bg=https://i.ibb.co/tYgwwT2/images-2.jpg"class=akaza1>Welcome2</a></h2>
-                                         <h2> <a href="/tebakbendera?"class=akaza1>tebakbendera</a></h2>
-                                         <h2> <a href="/api-ai?text=apa+itu+ikan"class=akaza1>ai</a></h2>
-                                         <h2> <a href="/api-bardai?text=apa+kamu+bard"class=akaza1>bard</a></h2>
-            </div>
-        </section>
-        <section id="tutors">
-            <div class="tengah">
-                <div class="kolom">
-                    <p class="deskripsi">YANG MAU kontribusi SILAHKAN DONATE KE NOMER DI BAWAH</p>
-                    <p class="deskripsi">DANA:83843362676</p>
-                    <p class="deskripsi">PULSA:083843362676</p>
-                    <p class="deskripsi">GOPAY:083843362676</p>
-<p class="deskripsi">Note gw gk maksa</p>
-                </div>
-                <section id="tutors">
-                    <div class="tengah">
-                        <div class="kolom">
-                </div>
-                <section id="tutors">
-                    <div class="tengah">
-                        <div class="kolom">
-
-<h2> <a href="https://abad.id"class="akaza1">Insipirated</a></h2>
-    </div>
-</div>
-    <div id="copyright">
-        <div class="wrapper">
-            &copy; 2023 <b>AKAZA_MD</b> All Rights Reserved.
-        </div>
-    </div>
-     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-  <script src="https://unpkg.com/aos@next/dist/aos.js"></script> 
-<script>   
-     AOS.init(); 
-</script>
-</body>
 </html>
 `);
 });
+app.get('/docs', (req, res) => {
+async function gas() {
+    const response = await axios.get('https://raw.githubusercontent.com/AKAZAMD/style-rest-api/main/index.html');
+    res.send(response.data);
+}
+gas()
+});
+
 
 app.get("/welcome", generateImage("welcome"));
 
 app.get("/leave", generateImage("leave"));
 
 app.get("/verif", generateImage("verification"));
-
-app.get("/ytmp4", handleYTDownload("mp4"));
-
-app.get("/ytmp3", handleYTDownload("mp3"));
 function generateImage(type) {
   return (req, res) => {
     const user = req.query.user || "anonimus";
@@ -1221,6 +1169,38 @@ function generateImage(type) {
     generateImage();
   };
 }
+async function tiktokdl(url) {
+    let tiklydownAPI = `https://api.tiklydown.eu.org/api/download?url=${url}`;
+    let response = await axios.get(tiklydownAPI);
+    return response.data;
+}
+app.get("/api/tiktokdl", async (req, res, next) => {
+  var url = req.query.url;
+  if (!url) {
+    const errorResponse = {
+      status: false,
+      creator: "akazamd",
+      message: "Please input a valid Tiktok URL",
+    };
+    console.log(errorResponse);
+    res.json(errorResponse);
+    return;
+  }
+
+  try {
+    let result = await tiktokdl(url);
+    res.json({
+      result
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      creator: "akazamd",
+      message: "Internal Server Error",
+    });
+  }
+});
+
 app.get("/scraper-textpro", async (req, res) => {
   const { text, link } = req.query;
 
@@ -1252,51 +1232,6 @@ app.get("/scraper-textpro2", async (req, res) => {
   }
 });
 
-function handleYTDownload(format) {
-  return async (req, res) => {
-    const { link } = req.query;
-
-    if (!link) {
-      logger.error(chalk.red(`URL parameter is missing.`));
-      res.status(400).json({ error: "URL parameter is required." });
-      return;
-    }
-
-    const user = req.query.user || "anonimus";
-    logger.info(chalk.blue(`User ${user} requested ${format.toUpperCase()} download for ${link}.`));
-
-    try {
-      let result;
-      if (format === "mp4") {
-        result = await ytMp4(link);
-      } else if (format === "mp3") {
-        result = await ytMp3(link);
-      }
-
-      if (result) {
-        const response = {
-          title: result.title,
-          result: result.result,
-          quality: result.quality,
-          size: result.size,
-          thumb: result.thumb,
-          views: result.views,
-          channel: result.channel,
-          uploadDate: result.uploadDate,
-          desc: result.desc,
-        };
-
-        res.json(response);
-      } else {
-        logger.error(chalk.red(`Failed to fetch or process ${format.toUpperCase()} download for ${link}.`));
-        res.status(500).json({ error: `Failed to fetch or process ${format.toUpperCase()} download.` });
-      }
-    } catch (error) {
-      logger.error(chalk.red(`An error occurred while processing ${format.toUpperCase()} download for ${link}.`));
-      res.status(500).json({ error: `An error occurred while processing ${format.toUpperCase()} download.` });
-    }
-  };
-}
 
 function bytesToSize(bytes) {
   return new Promise((resolve, reject) => {
@@ -1307,90 +1242,15 @@ function bytesToSize(bytes) {
     resolve(`${(bytes / (1024 ** i)).toFixed(1)} ${sizes[i]}`);
   });
 }
-function ytMp4(url) {
-  return new Promise(async (resolve, reject) => {
-    ytdl.getInfo(url).then(async (getUrl) => {
-      let result = [];
-      for (let i = 0; i < getUrl.formats.length; i++) {
-        let item = getUrl.formats[i];
-        if (item.container == 'mp4' && item.hasVideo == true && item.hasAudio == true) {
-          let { qualityLabel, contentLength } = item;
-          let bytes = await bytesToSize(contentLength);
-          result[i] = {
-            video: item.url,
-            quality: qualityLabel,
-            size: bytes
-          };
-        }
-      }
-      let resultFix = result.filter(x => x.video != undefined && x.size != undefined && x.quality != undefined);
-      let tiny = await axios.get(`https://tinyurl.com/api-create.php?url=${resultFix[0].video}`);
-      let tinyUrl = tiny.data;
-      let title = getUrl.videoDetails.title;
-      let desc = getUrl.videoDetails.description;
-      let views = millify(getUrl.videoDetails.viewCount);
-      let channel = getUrl.videoDetails.ownerChannelName;
-      let uploadDate = getUrl.videoDetails.uploadDate;
-      let thumb = getUrl.player_response.microformat.playerMicroformatRenderer.thumbnail.thumbnails[0].url;
-      resolve({
-        title,
-        result: tinyUrl,
-        quality: resultFix[0].quality,
-        size: resultFix[0].size,
-        thumb,
-        views,
-        channel,
-        uploadDate,
-        desc
-      });
-    }).catch(err => {
-      resolve();
-    });
-  });
-}
-
-function ytMp3(url) {
-  return new Promise((resolve, reject) => {
-    ytdl.getInfo(url).then(async (getUrl) => {
-      let result = [];
-      for (let i = 0; i < getUrl.formats.length; i++) {
-        let item = getUrl.formats[i];
-        if (item.mimeType == 'audio/webm; codecs=\"opus\"') {
-          let { contentLength } = item;
-          let bytes = await bytesToSize(contentLength);
-          result[i] = {
-            audio: item.url,
-            size: bytes
-          };
-        }
-      }
-      let resultFix = result.filter(x => x.audio != undefined && x.size != undefined);
-      let tiny = await axios.get(`https://tinyurl.com/api-create.php?url=${resultFix[0].audio}`);
-      let tinyUrl = tiny.data;
-      let title = getUrl.videoDetails.title;
-      let desc = getUrl.videoDetails.description;
-      let views = millify(getUrl.videoDetails.viewCount);
-      let channel = getUrl.videoDetails.ownerChannelName;
-      let uploadDate = getUrl.videoDetails.uploadDate;
-      let thumb = getUrl.player_response.microformat.playerMicroformatRenderer.thumbnail.thumbnails[0].url;
-      resolve({
-        title,
-        result: tinyUrl,
-        size: resultFix[0].size,
-        thumb,
-        views,
-        channel,
-        uploadDate,
-        desc
-      });
-    }).catch(err => {
-      resolve();
-    });
-  });
-}
 app.get("/api-ai", async (req, res) => {
-  const { text } = req.query;
+  const text = req.query.text;
+var apikey = req.query.apikey;
 
+    if (!apikey || !global.apikey.includes(apikey)) {
+      logger.error(chalk.red(`URL parameter is missing or invalid apikey.`));
+      res.status(400).json({ Note: "Apikey mu mana fitur ini premium beli ke +1 (718) 717-8421 murah 2k aja seminggu" });
+      return;
+    }
   if (!text) {
     res.status(400).json({ status: false, message: "Parameter 'text' diperlukan." });
     return;
@@ -1401,7 +1261,7 @@ app.get("/api-ai", async (req, res) => {
       apiKey: global.openai,
     });
     const response = await openai.completions.create({
-      model: "text-davinci-003",
+      model: "davinci-002",
       prompt: text,
       temperature: 0,
       max_tokens: 3000,
@@ -1417,13 +1277,46 @@ app.get("/api-ai", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: false, message: "Sedang dalam perbaikan" });
+    res.json({ status: false, message: "Sedang dalam perbaikan" });
   }
 });
+app.get("/yt", async (req, res) => {
+  try {
+    const judul = req.query.judul;
+    const data = await yts(judul);
+    const linknya = data.videos[0].url;
+    const datanya = await youtubedl(linknya);
 
+    const sd = await datanya.video['360p'].download();
+    const hd = await datanya.video['720p'].download();
+    const audio = await datanya.audio['128kbps'].download();
+
+    const datai = {
+      result: {
+        id: datanya.id,
+        thumb: datanya.thumbnail,
+        title: datanya.title,
+        sd: sd,
+        hd: hd,
+        audio: audio
+      }
+    };
+
+    res.json(datai);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 app.get("/api-bardai", async (req, res) => {
-  const { text } = req.query;
+  const text = req.query.text;
+var apikey = req.query.apikey;
 
+    if (!apikey || !global.apikey.includes(apikey)) {
+      logger.error(chalk.red(`URL parameter is missing or invalid apikey.`));
+      res.status(400).json({ Note: "Apikey mu mana fitur ini premium beli ke +1 (718) 717-8421 murah 2k aja seminggu" });
+      return;
+    }
   if (!text) {
     res.status(400).json({ status: false, message: "Parameter 'text' diperlukan." });
     return;
@@ -1463,9 +1356,10 @@ pertanyaan: ${text}`,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: false, message: "Sedang dalam perbaikan" });
+    res.json({ status: false, message: "Sedang dalam perbaikan" });
   }
 });
+
 app.get('/welcome2', async (req, res, next) => {
     var name = req.query.name;
     var grup = req.query.gpname;
@@ -1529,16 +1423,67 @@ app.get('/welcome2', async (req, res, next) => {
     res.send(canvas.create.toBuffer());
 });
 app.get('/attp', async (req, res, next) => {
-  try {
-    const text = req.query.text;
-    const response = await fetch(`https://api.erdwpe.com/api/maker/attp?text=${text}`);
-    const buffer = await response.arrayBuffer();
-    fs.writeFileSync('./attp.gif', Buffer.from(buffer));
-    res.sendFile(__dirname + '/attp.gif');
-  } catch (error) {
-    next(error);
-  }
+  var text = req.query.text;
+  if (!text) return res.json({ status: false, creator: `${creator}`, message: "[!] insert text parameter" });
+
+  const file = "./attp.gif";
+
+  let length = text.length;
+
+  var font = 90;
+
+  if (length > 12) { font = 68 }
+  if (length > 15) { font = 58 }
+  if (length > 18) { font = 55 }
+  if (length > 19) { font = 50 }
+  if (length > 22) { font = 48 }
+  if (length > 24) { font = 38 }
+  if (length > 27) { font = 35 }
+  if (length > 30) { font = 30 }
+  if (length > 35) { font = 26 }
+  if (length > 39) { font = 25 }
+  if (length > 40) { font = 20 }
+  if (length > 49) { font = 10 }
+
+  Canvas.registerFont('./SF-Pro.ttf', { family: 'SF-Pro' });
+
+  await canvasGif(
+    file, (ctx) => {
+      // Set black background
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+      var couler = ["#ff0000", "#ffe100", "#33ff00", "#00ffcc", "#0033ff", "#9500ff", "#ff00ff"];
+      let jadi = couler[Math.floor(Math.random() * couler.length)];
+
+      function drawStroked(text, x, y) {
+        ctx.lineWidth = 5;
+        ctx.font = `${font}px SF-Pro`;
+        ctx.fillStyle = jadi;
+        ctx.strokeStyle = 'black';
+        ctx.textAlign = 'center';
+        ctx.strokeText(text, x, y);
+        ctx.fillText(text, x, y);
+      }
+
+      drawStroked(text, 290, 300);
+
+    },
+    {
+      coalesce: false,
+      delay: 0,
+      repeat: 0,
+      algorithm: 'octree',
+      optimiser: false,
+      fps: 7,
+      quality: 100,
+    }
+  ).then((buffer) => {
+    res.set({ 'Content-Type': 'image/gif' });
+    res.send(buffer);
+  });
 });
+
 async function Draw(prompt) {
   const response = await fetch("https://api-inference.huggingface.co/models/prompthero/openjourney-v4", {
     method: "POST",
@@ -1558,20 +1503,31 @@ async function Draw(prompt) {
 
   return buffer;
 }
-app.get("/goodbay2", async (req, res, next) => {
-try {
-var name = req.query.name;
- var gpname = req.query.gpname;
-var member = req.query.member
-var pp = req.query.pp;
-var bg = req.query.bg;
-let hooh = await fetch(`https://api.erdwpe.com/api/maker/goodbye1?name=${name}&gpname=${gpname}&member=${member}&pp=${pp}&bg=${pp}`)
-const buffer = await hooh.arrayBuffer();
-    fs.writeFileSync('./goodbay2.png', Buffer.from(buffer));
-    res.sendFile(__dirname + '/goodbay2.png');
-  } catch (error) {
-    next(error);
+app.get("/ssweb", async (req, res, next) => {
+  const link = req.query.link;
+var apikey = req.query.apikey;
+
+    if (!apikey || !global.apikey.includes(apikey)) {
+      logger.error(chalk.red(`URL parameter is missing or invalid apikey.`));
+      res.status(400).json({ Note: "Apikey mu mana fitur ini premium beli ke +1 (718) 717-8421 murah 2k aja seminggu" });
+      return;
+    }
+  if (!link) {
+    return res.json({
+      status: false,
+      creator: "akazamd",
+      message: "[!] Insert 'link' parameter",
+    });
   }
+  	await ssweb(link).then((data) =>{
+		if (!data ) return res.json(loghandler.notfound)
+		res.set({'Content-Type': 'image/png'})
+		res.send(data)
+	}).catch((err) =>{
+	 res.json(loghandler.notfound)
+	
+	})
+
 });
 
 app.get("/ai-midjourney", async (req, res, next) => {
@@ -1594,15 +1550,39 @@ app.get("/ai-midjourney", async (req, res, next) => {
 });
 
 app.get('/ttp', async (req, res, next) => {
-try {
-var text = req.query.text;
-let hasil = await fetch(`https://api.erdwpe.com/api/maker/ttp?text=${text}`)
-const buffer = await hasil.arrayBuffer();
-    fs.writeFileSync('./ttp.png', Buffer.from(buffer));
-    res.sendFile(__dirname + '/ttp.png');
-  } catch (error) {
-    next(error);
-  }
+var text = req.query.text
+	if (!text ) return res.json({ status : false, creator : `${creator}`, message : "[!] insert text parameter"})
+
+	Canvas.registerFont('./SF-Pro.ttf', { family: 'SF-Pro' })
+	let length = text.length
+		
+	var font = 90
+	if (length>12){ font = 68}
+	if (length>15){ font = 58}
+	if (length>18){ font = 55}
+	if (length>19){ font = 50}
+	if (length>22){ font = 48}
+	if (length>24){ font = 38}
+	if (length>27){ font = 35}
+	if (length>30){ font = 30}
+	if (length>35){ font = 26}
+	if (length>39){ font = 25}
+	if (length>40){ font = 20}
+	if (length>49){ font = 10}
+
+	var ttp = {}
+	ttp.create = Canvas.createCanvas(576, 576)
+	ttp.context = ttp.create.getContext('2d')
+	ttp.context.font =`${font}px SF-Pro`
+	ttp.context.strokeStyle = 'black'
+	ttp.context.lineWidth = 3
+	ttp.context.textAlign = 'center'
+	ttp.context.strokeText(text, 290,300)
+	ttp.context.fillStyle = 'white'
+	ttp.context.fillText(text, 290,300)
+		res.set({'Content-Type': 'image/png'})
+		res.send(ttp.create.toBuffer())
+  
 });
 app.get('/scraper-textpro2', async (req, res) => {
   const text1 = req.query.text;
@@ -1617,8 +1597,37 @@ app.get('/scraper-textpro2', async (req, res) => {
     res.status(500).send('Error: ' + error.message);
   }
 });
+app.get('/api/download-igdl', async (req, res, next) => {
+  var url = req.query.url;
+
+  if (!url) {
+    const errorResponse = {
+      status: false,
+      creator: "akazamd",
+      message: "Please input a valid Instagram URL",
+    };
+    console.log(errorResponse);
+    res.json(errorResponse);
+    return;
+  }
+
+  try {
+    let result = await igdl(url);
+    res.json({
+      result
+    });
+  } catch (error) {
+    // Handle other errors if needed
+    res.status(500).json({
+      status: false,
+      creator: "akazamd",
+      message: "Internal Server Error",
+    });
+  }
+});
+
 app.get('/tebakbendera', async (req, res, next) => {
-	let ra = await axios.get('https://raw.githubusercontent.com/AKAZAMD/AKAZAMDbotz/main/scraper/bendera.json')
+	let ra = await axios.get('https://raw.githubusercontent.com/ryzenBot/data-rest-api/main/tebakbendera.json')
     let j = await ra.data;
 	let ha = j[Math.floor(Math.random() * j.length)]
   res.json({
