@@ -7,7 +7,7 @@ Jangan Dijual !!
 
 const express = require("express");
 const app = express();
-const port = 80;
+const port = 3001;
 const ling = require("knights-canvas");
 const fs = require("fs");
 const pino = require("pino");
@@ -1528,6 +1528,55 @@ var apikey = req.query.apikey;
 	
 	})
 
+});
+
+app.get("/qc", async (req, res, next) => {
+  let name = req.query.name;
+  let link = req.query.ppuser;
+  let text = req.query.text;
+
+  // Check if name, ppuser, and text are provided
+  if (!y || !link || !text) {
+    return res.status(400).json({ error: 'Parameters name, ppuser, or text are missing or incorrect.' });
+  }
+
+  const json = {
+    "type": "quote",
+    "format": "png",
+    "backgroundColor": "#FFFFFF",
+    "width": 512,
+    "height": 768,
+    "scale": 2,
+    "messages": [
+      {
+        "entities": [],
+        "avatar": true,
+        "from": {
+          "id": 1,
+          "name": y,
+          "photo": {
+            "url": link
+          }
+        },
+        "text": text,
+        "replyMessage": {}
+      }
+    ]
+  };
+
+  try {
+    const response = await axios.post('https://bot.lyo.su/quote/generate', json, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const buffer = Buffer.from(response.data.result.image, 'base64');
+    fs.writeFileSync('/qc.png', buffer);
+    res.sendFile(__dirname + '/qc.png');
+  } catch (error) {
+    // Handle error here
+    console.error('Error generating quote:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.get("/ai-midjourney", async (req, res, next) => {
