@@ -34,6 +34,7 @@ global.openai = "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";
 global.apikey = ['namalu22', 'Rest-Api-Premium1'];
 global.hugging = "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";
 app.use(express.json());
+const publicDirectoryPath = path.join(__dirname, 'public');
 
 app.use(express.static(publicDirectoryPath));
 
@@ -331,8 +332,128 @@ async function photooxy(url, text) {
   return result
 }
 app.get('/404', (req, res) => {
-    res.send(`<p> NOT FOUND<p>
-    <a href="/">BACK HOME<a>
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Halaman Tidak Ditemukan</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            color: black;
+            pointer-events: none;
+        }
+
+        .heading {
+            text-align: center;
+            color: blue;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-size: 5rem;
+            margin-bottom: 40px;
+        }
+
+        .button-container {
+            text-align: center;
+            animation: slideIn 2s linear;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 15px 30px;
+            font-size: 24px;
+            background-color: #00ff00;
+            color: #000;
+            border-radius: 50px;
+            cursor: pointer;
+            opacity: 1;
+            animation: fadeOut 2s linear infinite alternate; /* Mengatur animasi menghilang dan muncul */
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="heading">
+        <h1 class="title">Halaman Tidak Ditemukan</h1>
+        <div class="button-container">
+            <a class="back-button" href="/docs">Kembali ke Docs</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        window.addEventListener('load', function () {
+            particlesJS("particles-js", {
+                "particles": {
+                    "number": {
+                        "value": 100,
+                        "density": {
+                            "enable": true,
+                            "value_area": 600
+                        }
+                    },
+                    "color": {
+                        "value": "#00ff00"
+                    },
+                    "shape": {
+                        "type": "circle"
+                    },
+                    "opacity": {
+                        "value": 0.5,
+                        "random": true
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 20
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
 `
 );
 });
@@ -1261,7 +1382,7 @@ var apikey = req.query.apikey;
       apiKey: global.openai,
     });
     const response = await openai.completions.create({
-      model: "davinci-002",
+      model: "text-davinci-003",
       prompt: text,
       temperature: 0,
       max_tokens: 3000,
@@ -1530,55 +1651,6 @@ var apikey = req.query.apikey;
 
 });
 
-app.get("/qc", async (req, res, next) => {
-  let name = req.query.name;
-  let link = req.query.ppuser;
-  let text = req.query.text;
-
-  // Check if name, ppuser, and text are provided
-  if (!y || !link || !text) {
-    return res.status(400).json({ error: 'Parameters name, ppuser, or text are missing or incorrect.' });
-  }
-
-  const json = {
-    "type": "quote",
-    "format": "png",
-    "backgroundColor": "#FFFFFF",
-    "width": 512,
-    "height": 768,
-    "scale": 2,
-    "messages": [
-      {
-        "entities": [],
-        "avatar": true,
-        "from": {
-          "id": 1,
-          "name": y,
-          "photo": {
-            "url": link
-          }
-        },
-        "text": text,
-        "replyMessage": {}
-      }
-    ]
-  };
-
-  try {
-    const response = await axios.post('https://bot.lyo.su/quote/generate', json, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    const buffer = Buffer.from(response.data.result.image, 'base64');
-    fs.writeFileSync('/qc.png', buffer);
-    res.sendFile(__dirname + '/qc.png');
-  } catch (error) {
-    // Handle error here
-    console.error('Error generating quote:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 app.get("/ai-midjourney", async (req, res, next) => {
   try {
     var text = req.query.text;
@@ -1672,6 +1744,55 @@ app.get('/api/download-igdl', async (req, res, next) => {
       creator: "akazamd",
       message: "Internal Server Error",
     });
+  }
+});
+
+app.get("/qc", async (req, res, next) => {
+  let name = req.query.name;
+  let link = req.query.ppuser;
+  let text = req.query.text;
+
+  // Check if name, ppuser, and text are provided
+  if (!y || !link || !text) {
+    return res.status(400).json({ error: 'Parameters name, ppuser, or text are missing or incorrect.' });
+  }
+
+  const json = {
+    "type": "quote",
+    "format": "png",
+    "backgroundColor": "#FFFFFF",
+    "width": 512,
+    "height": 768,
+    "scale": 2,
+    "messages": [
+      {
+        "entities": [],
+        "avatar": true,
+        "from": {
+          "id": 1,
+          "name": y,
+          "photo": {
+            "url": link
+          }
+        },
+        "text": text,
+        "replyMessage": {}
+      }
+    ]
+  };
+
+  try {
+    const response = await axios.post('https://bot.lyo.su/quote/generate', json, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const buffer = Buffer.from(response.data.result.image, 'base64');
+    fs.writeFileSync('/qc.png', buffer);
+    res.sendFile(__dirname + '/qc.png');
+  } catch (error) {
+    // Handle error here
+    console.error('Error generating quote:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
